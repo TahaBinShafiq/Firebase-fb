@@ -1,6 +1,10 @@
-import { createUserWithEmailAndPassword } from "./auth.js";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "./auth.js";
 import { auth, db } from "./config.js";
 import { doc, setDoc } from "./fireStore.js";
+import { checkUserLogin } from "./MainPage/index.js";
 
 let passInput = document.getElementById("loginPassword");
 let passEye = document.getElementById("eye-img");
@@ -50,6 +54,7 @@ window.resgisterUser = (event) => {
 
   if (loading === true) {
     registerBtn.innerText = "Creating...";
+    registerBtn.disabled = true;
   }
 
   createUserWithEmailAndPassword(auth, email.value, NewPasswordInp.value)
@@ -58,6 +63,7 @@ window.resgisterUser = (event) => {
       loading = false;
       if (loading === false) {
         registerBtn.innerHTML = "Register";
+        registerBtn.disabled = false;
       }
       const user = userCredential.user;
       addUserToDb(
@@ -77,6 +83,9 @@ window.resgisterUser = (event) => {
         text: "Account Created Successfully!",
         duration: 3000,
       }).showToast();
+      setTimeout(() => {
+        window.location.href = "MainPage/index.html";
+      }, 2000);
 
       console.log("ye woh user he jo auth me save howa he", user);
       // ...
@@ -85,6 +94,7 @@ window.resgisterUser = (event) => {
       loading = false;
       if (loading === false) {
         registerBtn.innerHTML = "Register";
+        registerBtn.disabled = false;
       }
       const errorMessage = error.message;
       Toastify({
@@ -114,32 +124,58 @@ const addUserToDb = async (name, email, gender, born, userId) => {
   }
 };
 
-// function loginUser(event) {
-//   event.preventDefault();
-//   let email = document.getElementById("login-email");
+window.loginUser = (event) => {
+  event.preventDefault();
+  let form = document.getElementById("login-box");
 
-//   let usersFormStorage = JSON.parse(localStorage.getItem("users")) || [];
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
 
-//   let savedUser = usersFormStorage.find(
-//     (element) => element.email === email.value
-//   );
+  let loginBtn = document.getElementById("login-btn");
+  let email = document.getElementById("login-email");
+  let password = document.getElementById("loginPassword");
 
-//   if (
-//     savedUser?.email === email.value &&
-//     savedUser?.password === passInput.value
-//   ) {
-//     if (!Array.isArray(savedUser.friends)) {
-//       savedUser.friends = [];
-//     }
-//     email.value = "";
-//     passInput.value = "";
-//     localStorage.setItem("loginUser", JSON.stringify(savedUser));
-//     window.location.assign("MainPage/index.html");
-//   } else {
-//     email.value = "";
-//     passInput.value = "";
-//     let incorrectPass = document.getElementById("incorrect-pass");
-//     incorrectPass.style.display = "block";
-//     incorrectPass.innerHTML = "Invalid credientials";
-//   }
-// }
+  loading = true;
+  if (loading === true) {
+    loginBtn.innerHTML = "Login...";
+    loginBtn.disabled = true;
+  }
+  signInWithEmailAndPassword(auth, email.value, password.value)
+    .then((userCredential) => {
+      // Signed in
+      loading = false;
+      if (loading === false) {
+        loginBtn.innerHTML = "Log In";
+        loginBtn.disabled = false;
+      }
+      const user = userCredential.user;
+      Toastify({
+        text: "Login Successfully!",
+        duration: 3000,
+      }).showToast();
+      email.value = "";
+      password.value = "";
+      setTimeout(() => {
+        window.location.href = "MainPage/index.html";
+      }, 2000);
+      // ...
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      loading = false;
+      if (loading === false) {
+        loginBtn.innerHTML = "Log In";
+        loginBtn.disabled = false;
+      }
+      Toastify({
+        text: errorMessage,
+        duration: 3000,
+        style: {
+          background: "linear-gradient(to right, #e61300ff, #eb4b23ff)",
+        },
+      }).showToast();
+    });
+};

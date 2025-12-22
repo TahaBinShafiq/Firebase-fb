@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Facebook Login Clone</title>
     <link rel="stylesheet" href="Login.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
 <body>
@@ -18,7 +20,7 @@
             <p class="tagline">Facebook helps you connect and share with the people in your life.</p>
         </div>
         <div class="right-box">
-            <form action="" class="login-box">
+            <form action="" class="login-box" id="login-box">
                 <input type="email" placeholder="Email address or phone number" required id="login-email" />
                 <div class="password-wrapper">
                     <input class="inp" type="password" id="loginPassword" placeholder="Password" required>
@@ -27,8 +29,8 @@
                             id="eye-img">
                     </span>
                 </div>
-                <button class="login-btn" type="submit" onclick="loginUser(event)">Log in</button>
-                <p id="incorrect-pass"></p>
+                <button class="login-btn" type="submit" id="login-btn" onclick="loginUser(event)">Log in</button>
+               
                 <a href="#" class="forgot-link">Forgotten password?</a>
                 <hr />
                 <button class="create-btn" type="button" onclick="window.location.assign('./register.html')">Create new
@@ -36,8 +38,10 @@
             </form>
             <p class="create-page"><strong>Create a Page</strong> for a celebrity, brand or business.</p>
         </div>
+      
     </div>
     <script src="login.js" type="module"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </body>
 
 

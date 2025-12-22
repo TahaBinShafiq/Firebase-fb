@@ -1,127 +1,120 @@
-checkUserLogin()
-class Post {
-    constructor(content, owner) {
-        this.content = content
-        this.owner = owner
-        this.createdAt = new Date().toISOString();
-        this.likes = 0
-        this.comments = []
-    }
-    increaseLike() {
-        this.likes++;
-    }
-}
+import { onAuthStateChanged, signOut } from "../auth.js";
+import { auth } from "../config.js";
 
+checkUserLogin();
 
 const dropdown = document.getElementById("dropdown");
 const mediaDropDown = document.getElementById("dropdown-2");
 const profileIcon = document.getElementById("profile-icon");
 
-function toggleDropdown() {
-    dropdown.classList.toggle("show");
-    mediaDropDown.classList.toggle("show")
-}
-
-
-
+window.toggleDropdown = () => {
+  dropdown.classList.toggle("show");
+  mediaDropDown.classList.toggle("show");
+};
 
 window.addEventListener("click", function (e) {
-    if (!profileIcon.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.remove("show");
-    }
+  if (!profileIcon?.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.classList.remove("show");
+  }
 });
 
-function addUserName() {
-    let loggedInUser = JSON.parse(localStorage.getItem("loginUser"));
-    let userName = document.getElementById("userName")
-    userName.innerHTML = loggedInUser.fullName
-}
+// function addUserName() {
+//     let loggedInUser = JSON.parse(localStorage.getItem("loginUser"));
+//     let userName = document.getElementById("userName")
+//     userName.innerHTML = loggedInUser.fullName
+// }
 
-addUserName()
-
-
-function checkUserLogin() {
-    let loggedInUser = JSON.parse(localStorage.getItem("loginUser"))
-    if (!loggedInUser) {
+// addUserName()
+export function checkUserLogin() {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Login user:", user.uid);
+        resolve(user);
+      } else {
         Swal.fire({
-            title: "Please Login",
-            icon: "warning",
-            confirmButtonText: "Login Now",
-            showConfirmButton: true,
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            allowEnterKey: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.assign("../index.html")
-            }
-        })
-    }
+          title: "Please Login",
+          icon: "warning",
+          confirmButtonText: "Login Now",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          allowEnterKey: false,
+        }).then(() => {
+          window.location.replace("../index.html");
+        });
+      }
+    });
+  });
 }
+
 window.addEventListener("DOMContentLoaded", checkUserLogin);
 
-function logoutUser() {
-    localStorage.removeItem("loginUser");
-    window.location.assign("../index.html");
-}
+window.logoutUser = () => {
+  signOut(auth)
+    .then(() => {
+      // Sign-out successful.
+    })
+    .catch((error) => {
+      // An error happened.
+    });
 
+  window.location.assign("../index.html");
+};
 
 const loggedInUser = JSON.parse(localStorage.getItem("loginUser")) || [];
 const users = JSON.parse(localStorage.getItem("users")) || [];
-let inputPost = document.getElementById("post-input")
-
+let inputPost = document.getElementById("post-input");
 
 function createdPost() {
-    let publishedPostBtn = document.getElementById("published-post")
-    if (!inputPost.value.trim()) {
-        Swal.fire("Please write something before posting.");
-        return;
-    }
-    let owner = JSON.parse(localStorage.getItem("loginUser"))
+  let publishedPostBtn = document.getElementById("published-post");
+  if (!inputPost.value.trim()) {
+    Swal.fire("Please write something before posting.");
+    return;
+  }
+  let owner = JSON.parse(localStorage.getItem("loginUser"));
 
-    delete owner.password
+  delete owner.password;
 
-    let post = {
-        content: inputPost.value,
-        owner : owner,
-        time: Date.now()
-    };
+  let post = {
+    content: inputPost.value,
+    owner: owner,
+    time: Date.now(),
+  };
 
-    let freshOwner = JSON.parse(localStorage.getItem("loginUser"));
-    if (!Array.isArray(freshOwner.myPosts)) {
-        freshOwner.myPosts = [];
-    }
-    freshOwner.myPosts.push(post)
+  let freshOwner = JSON.parse(localStorage.getItem("loginUser"));
+  if (!Array.isArray(freshOwner.myPosts)) {
+    freshOwner.myPosts = [];
+  }
+  freshOwner.myPosts.push(post);
 
-    console.log(freshOwner)
-    localStorage.setItem("loginUser", JSON.stringify(freshOwner));
+  console.log(freshOwner);
+  localStorage.setItem("loginUser", JSON.stringify(freshOwner));
 
-    let users = JSON.parse(localStorage.getItem("users")) || [];
-    let userIndex = users.findIndex(u => u.email === freshOwner.email);
-    if (userIndex !== -1) {
-        users[userIndex] = freshOwner;
-        localStorage.setItem("users", JSON.stringify(users));
-    }
-    inputPost.value = ""
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+  let userIndex = users.findIndex((u) => u.email === freshOwner.email);
+  if (userIndex !== -1) {
+    users[userIndex] = freshOwner;
+    localStorage.setItem("users", JSON.stringify(users));
+  }
+  inputPost.value = "";
 
+  if (document.getElementById("posts-feed-container")) {
+    showPost();
+  }
 
-    if (document.getElementById("posts-feed-container")) {
-        showPost();
-    }
-
-    if (document.getElementById("newsfeed-container")) {
-        document.getElementById("newsfeed-container").innerHTML = "";
-        showNewsFeed();
-    }
+  if (document.getElementById("newsfeed-container")) {
+    document.getElementById("newsfeed-container").innerHTML = "";
+    showNewsFeed();
+  }
 }
 
 function showPost() {
-    let user = JSON.parse(localStorage.getItem("loginUser"));
-    let postFeedContainer = document.getElementById("posts-feed-container")
-    postFeedContainer.innerHTML = "";
-    user.myPosts.reverse().map((post) => {
-        console.log(user.myPosts)
-        postFeedContainer.innerHTML += ` <div class="post-box">
+  let user = JSON.parse(localStorage.getItem("loginUser"));
+  let postFeedContainer = document.getElementById("posts-feed-container");
+  postFeedContainer.innerHTML = "";
+  user.myPosts.reverse().map((post) => {
+    console.log(user.myPosts);
+    postFeedContainer.innerHTML += ` <div class="post-box">
                 <div class="post-header">
                     <div class="profile-img">
                     </div>
@@ -164,25 +157,25 @@ function showPost() {
                         </svg> Share</button>
                 </div>
                 </div>
-            </div> `
-    })
-
+            </div> `;
+  });
 }
 
-
 function showNewsFeed() {
-    let users = JSON.parse(localStorage.getItem("users"))
-    let allPosts = []
-    users.forEach(user => {
-        if (Array.isArray(user.myPosts)) {
-            user.myPosts.forEach(post => {
-                allPosts.push((post));
-            });
-        }
-    });  
-    allPosts.sort(() => Math.random() - 0.5 );
-    allPosts.map((post) => {
-        document.getElementById("newsfeed-container").innerHTML += `<div class="post-box">
+  let users = JSON.parse(localStorage.getItem("users"));
+  let allPosts = [];
+  users.forEach((user) => {
+    if (Array.isArray(user.myPosts)) {
+      user.myPosts.forEach((post) => {
+        allPosts.push(post);
+      });
+    }
+  });
+  allPosts.sort(() => Math.random() - 0.5);
+  allPosts.map((post) => {
+    document.getElementById(
+      "newsfeed-container"
+    ).innerHTML += `<div class="post-box">
                 <div class="post-header">
                     <div class="profile-img">
                     </div>
@@ -224,9 +217,8 @@ function showNewsFeed() {
                         </svg> Share</button>
                 </div>
                 </div>
-            </div>`
-    })
+            </div>`;
+  });
 }
 
-
-showNewsFeed()
+showNewsFeed();
