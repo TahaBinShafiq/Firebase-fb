@@ -8,6 +8,7 @@ function checkCurrentUser() {
       console.log("ye woh user he jo is waqt login he", user);
       let userName = document.getElementById("userName");
       userName.innerHTML = user.displayName;
+     
     } else {
       Toastify({
         text: "Logout Successfully!",
