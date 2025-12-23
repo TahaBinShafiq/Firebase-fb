@@ -1,10 +1,11 @@
 import {
   createUserWithEmailAndPassword,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
+  updateProfile,
 } from "./auth.js";
 import { auth, db } from "./config.js";
-import { doc, setDoc } from "./fireStore.js";
-import { checkUserLogin } from "./MainPage/index.js";
+import { doc, getDoc, setDoc } from "./fireStore.js";
 
 let passInput = document.getElementById("loginPassword");
 let passEye = document.getElementById("eye-img");
@@ -58,7 +59,7 @@ window.resgisterUser = (event) => {
   }
 
   createUserWithEmailAndPassword(auth, email.value, NewPasswordInp.value)
-    .then((userCredential) => {
+    .then(async (userCredential) => {
       // Signed up
       loading = false;
       if (loading === false) {
@@ -79,14 +80,14 @@ window.resgisterUser = (event) => {
         dateOfBirth.value = "";
         NewPasswordInp.value = "";
       });
+      await updateProfile(user, {
+        displayName: fullName.value,
+      });
+
       Toastify({
         text: "Account Created Successfully!",
         duration: 3000,
       }).showToast();
-      setTimeout(() => {
-        window.location.href = "MainPage/index.html";
-      }, 2000);
-
       console.log("ye woh user he jo auth me save howa he", user);
       // ...
     })
@@ -108,7 +109,7 @@ window.resgisterUser = (event) => {
 
 const addUserToDb = async (name, email, gender, born, userId) => {
   try {
-    const docRef = await setDoc(doc(db, "users", userId), {
+    await setDoc(doc(db, "users", userId), {
       fullName: name,
       email: email,
       gender: gender,
@@ -157,9 +158,6 @@ window.loginUser = (event) => {
       }).showToast();
       email.value = "";
       password.value = "";
-      setTimeout(() => {
-        window.location.href = "MainPage/index.html";
-      }, 2000);
       // ...
     })
     .catch((error) => {
@@ -179,3 +177,25 @@ window.loginUser = (event) => {
       }).showToast();
     });
 };
+
+function checkCurrentUser() {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const uid = user.uid;
+      console.log("ye woh user he jo is waqt login he", user);
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      console.log(userSnap);
+      if (userSnap.exists() && uid) {
+        window.location.href = "MainPage/index.html";
+      }
+      // ...
+    } else {
+      // User is signed out
+      // ...
+    }
+  });
+}
+
+checkCurrentUser();
