@@ -10,8 +10,8 @@ import {
   where,
 } from "../fireStore.js";
 
-const showUserCon = document.getElementById("allUsersCon");
 
+const showUserCon = document.getElementById("allUsersCon");
 const dropdown = document.getElementById("dropdown");
 const mediaDropDown = document.getElementById("dropdown-2");
 const profileIcon = document.getElementById("profile-icon");
@@ -38,7 +38,7 @@ async function checkCurrentUserAndLoadUsers() {
     document.getElementById("userName").innerHTML = user.displayName;
 
     try {
-      // 1. Fetch Sent Requests (Jo maine bheji hain)
+      // Fetch Sent Requests (Jo maine bheji hain)
       const sentQuery = query(
         collection(db, "friendRequests"),
         where("senderId", "==", currentUserId)
@@ -47,7 +47,7 @@ async function checkCurrentUserAndLoadUsers() {
       const sentToIDs = new Set();
       sentSnap.forEach((doc) => sentToIDs.add(doc.data().receiverId));
 
-      // 2. Fetch Received Requests (Jo mujhe aayi hain)
+      // Fetch Received Requests (Jo mujhe aayi hain)
       const receivedQuery = query(
         collection(db, "friendRequests"),
         where("receiverId", "==", currentUserId)
@@ -56,13 +56,13 @@ async function checkCurrentUserAndLoadUsers() {
       const receivedFromIDs = new Set();
       receivedSnap.forEach((doc) => receivedFromIDs.add(doc.data().senderId));
 
-      // 3. NEW: Fetch Already Friends (Jo pehle se dost hain unhe hatane ke liye)
+      // NEW: Fetch Already Friends (Jo pehle se dost hain unhe hatane ke liye)
       const friendsQuery = collection(db, "users", currentUserId, "friends");
       const friendsSnap = await getDocs(friendsQuery);
       const alreadyFriendsIDs = new Set();
       friendsSnap.forEach((doc) => alreadyFriendsIDs.add(doc.data().friendId));
 
-      // 4. Fetch All Users
+      // Fetch All Users
       const querySnapshot = await getDocs(collection(db, "users"));
       showUserCon.innerHTML = "";
 
@@ -102,6 +102,8 @@ async function checkCurrentUserAndLoadUsers() {
   });
 }
 checkCurrentUserAndLoadUsers();
+
+
 
 async function sendFriendRequest(senderId, receiverId, button) {
   const requestId = `${senderId}_${receiverId}`;

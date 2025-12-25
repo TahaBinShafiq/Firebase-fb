@@ -46,7 +46,6 @@ window.addEventListener("click", function (e) {
   }
 });
 
-
 let messengerPopup = document.getElementById("messenger");
 let msgIcon = document.getElementById("msg-icon");
 
@@ -66,8 +65,12 @@ messengerPopup.addEventListener("click", (e) => {
   e.stopPropagation();
 });
 
+document.getElementById("mini-chat-window").addEventListener("click", (e) => {
+  e.stopPropagation();
+});
 document.addEventListener("click", () => {
   messengerPopup.style.display = "none";
+  closeChatWindow();
 });
 
 async function loadPopupChats() {
@@ -122,14 +125,15 @@ async function loadPopupChats() {
 }
 
 let activeRoomId = null;
+let messageUnsubscribe = null;
 
 window.checkRoom = async (friendId, friendName) => {
-  console.log(friendName)
+  console.log(friendName);
   const userId = auth.currentUser.uid;
   const userDetails = { [userId]: true, [friendId]: true };
   let roomId = null;
 
-  // 1. Existing Room Check (Sir wala logic)
+  // Existing Room Check 
   const q = query(
     collection(db, "chatrooms"),
     where(`userDetails.${userId}`, "==", true),
@@ -146,54 +150,90 @@ window.checkRoom = async (friendId, friendName) => {
     roomId = docRef.id;
   }
 
-  // 2. Popups Switch Karein
-  messengerPopup.style.display = "none" // Chat list band
+  messengerPopup.style.display = "none";
   const chatWin = document.getElementById("mini-chat-window");
-  chatWin.classList.remove("hidden"); // Chat window open
+  chatWin.classList.remove("hidden");
   chatWin.classList.add("flex");
 
-  console.log(friendName)
-  // 3. Header Update Karein
+  console.log(friendName);
   document.getElementById("chat-friend-name").innerText = friendName;
-  document.getElementById("chat-friend-img").src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHgjCOoJ_d6n-PjKd4FwKzXgXKQ-rK9BYYkg&s"
+  document.getElementById("chat-friend-img").src =
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHgjCOoJ_d6n-PjKd4FwKzXgXKQ-rK9BYYkg&s";
 
-  // 4. Messages Load Karein (Real-time)
-  loadMessages(roomId);
   activeRoomId = roomId;
+  getRealTimeData(roomId);
 };
 
-// Window close karne ka function
+
+
 window.closeChatWindow = () => {
   document.getElementById("mini-chat-window").classList.add("hidden");
   activeRoomId = null;
 };
 
-function loadMessages(roomId) {
-  const msgDisplay = document.getElementById("messages-display");
+
+
+function getRealTimeData(roomId) {
+  if (messageUnsubscribe) messageUnsubscribe();
+
   const q = query(
-    collection(db, "chatrooms", roomId, "messages"),
+    collection(db, "chatrooms", roomId, "messeges"),
     orderBy("createdAt", "asc")
   );
 
-  // Real-time listener
-  onSnapshot(q, (snapshot) => {
-    msgDisplay.innerHTML = "";
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const isMe = data.senderId === auth.currentUser.uid;
+  messageUnsubscribe = onSnapshot(q, (querySnapshot) => {
+    const messagesCon = document.getElementById("message-con");
+    if (!messagesCon) return;
 
-      const msgTag = document.createElement("div");
-      msgTag.className = isMe
-        ? "bg-blue-500 text-white self-end px-3 py-1 rounded-lg max-w-[80%] text-sm"
-        : "bg-gray-200 text-black self-start px-3 py-1 rounded-lg max-w-[80%] text-sm";
+    messagesCon.innerHTML = "";
 
-      msgTag.innerText = data.text;
-      msgDisplay.appendChild(msgTag);
+    querySnapshot.forEach((doc) => {
+      const { msg, userId } = doc.data();
+
+      const isMe = userId === auth.currentUser.uid;
+
+      messagesCon.innerHTML += `
+        <li class="flex ${isMe ? "justify-end" : "justify-start"} mb-2">
+          <div class="
+            max-w-[65%]
+            px-4 py-2
+            text-sm
+            rounded-2xl
+            ${isMe 
+              ? "bg-blue-600 text-white rounded-br-none" 
+              : "bg-gray-200 text-gray-900 rounded-bl-none"}
+          ">
+            ${msg}
+          </div>
+        </li>
+      `;
     });
-    // Scroll to bottom
-    msgDisplay.scrollTop = msgDisplay.scrollHeight;
+
+    messagesCon.scrollTop = messagesCon.scrollHeight;
   });
 }
+
+
+
+document.getElementById("send-btn").addEventListener("click", async () => {
+  if (!activeRoomId) return;
+
+  let messageText = document.getElementById("message-text");
+  if (messageText.value.trim() === "") return;
+
+  try {
+    await addDoc(collection(db, "chatrooms", activeRoomId, "messeges"), {
+      createdAt: serverTimestamp(),
+      msg: messageText.value,
+      userId: auth.currentUser.uid,
+    });
+
+    messageText.value = ""; 
+  } catch (e) {
+    console.error("Error sending message: ", e);
+  }
+});
+
 
 
 window.logoutUser = () => {
@@ -207,6 +247,6 @@ window.logoutUser = () => {
       window.location.assign("../index.html");
     })
     .catch((error) => {
-      // An error happened.
+      
     });
 };
